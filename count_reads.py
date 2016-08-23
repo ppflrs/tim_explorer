@@ -79,8 +79,8 @@ def main():
 		gff_file = args.gff
 	else:
 		sys.exit('Exiting. No GFF file specified.')
-		
-
+	
+	features, counts = gff_reader(gff_file, 'CDS', 'product')
 
 	hit_dict = dict()
 	notaligned = 0
@@ -370,7 +370,7 @@ def gff_reader(gff_file, feature_type, id_attribute):
 		for feature in gff:
 			if feature.type == feature_type:  # if the feature is the feature we are looking for.
 				if id_attribute in feature.attr:
-					feature_id = feature.attr[id_attribute] + ' // ' + feature.attr['Parent']
+					feature_id = feature.attr[id_attribute] + ' // ' + feature.attr['Parent'][:-4]
 				features[feature.iv] += feature_id
 				counts[feature.attr[id_attribute]] = 0
 				counter += 1
@@ -383,8 +383,6 @@ def gff_reader(gff_file, feature_type, id_attribute):
 		print gff
 		sys.stderr.write("Error occured when processing GFF file (%s):\n" % gff.get_line_number_string())
 		raise
-	if verbose:
-		print counter, "features found in gff file"
 	return features, counts
 
 main()

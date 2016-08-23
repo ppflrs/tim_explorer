@@ -31,7 +31,7 @@ def main():
 	exe_parser.add_argument("-c", "--max_clip", help = "proportion of bases clipped from read for alignment. (default = 0.3).", type=float)
 	exe_parser.add_argument("-m", "--mode", help="(p)aired end or (s)ingle end (default=n)", type=str)
 	exe_parser.add_argument("--order", help="order of bam/sam: (n)ame or p(osition). default=n", type=str)
-
+	exe_parser.add_argument("--gff", help="GFF file", type=str)
 	exe_parser.add_argument("-o", "--out", help="name of counts output file.", type=str)
 	
 	args = exe_parser.parse_args()
@@ -73,7 +73,13 @@ def main():
 	if args.max_clip:
 		max_clip_ = args.max_clip
 	else:
-		max_clip_ = float(0.1) 
+		max_clip_ = float(0.1)
+
+	if args.gff:
+		gff_file = args.gff
+	else:
+		sys.exit('Exiting. No GFF file specified.')
+		
 
 
 	hit_dict = dict()

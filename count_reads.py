@@ -58,6 +58,7 @@ def main():
 		samoutfile = None
 	if args.out:
 		outfile = open(args.out, "w")
+		outfile_genes = args.out.replace('.tsv','.cds.tsv')
 	else:
 		outfile = None
 	
@@ -225,9 +226,33 @@ def main():
 				iv_seq_good_2 = False
 
 			temp_iv = []
+
 			try: ###^*(^*^&^*^*^*^*^* ANY CONDITOINS TO ADD??
+				feature_set = set()
 				for iv in iv_seq:
+					if iv.chrom not in features.chrom_vectors:
+					# check if alignment feaure name in features from GFF file
+					# The name of a sequence (i.e., chromosome, contig, or the like).
+					# check the gff features dictionary	
+						#print '!!!'
+						raise UnknownChrom
+					
+					for iv2,fs2 in features[iv].steps():
+						#print '==='
+						feature_set = feature_set.union(fs2)
+
 					temp_iv.append(iv.chrom) #get name of chromosom/contig both PE reads align to, append to list.
+				if len(feature_set) == 1:
+					count_read = False
+					if iv_seq_good_1:
+						count_read = True
+					elif iv_seq_good_2:
+						count_read = True
+					#print count_read, list(feature_set)[0], counts
+					if count_read == True:
+						counts[list(feature_set)[0]] += 1
+						#print list(feature_set)[0], '\t',counts[list(feature_set)[0]]
+						
 				#print temp_iv, 'TRY', iv_seq_good_1, iv_seq_good_2
 				temp_iv = set(temp_iv)
 				#if temp_iv[0]  ==  temp_iv[1]: #if the read maps to the same contig/chromosom then +1 only once
@@ -244,29 +269,16 @@ def main():
 										elif alignment[1] is None:
 												outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
 								elif iv_seq_good_2:
-										print '1\t', str('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id]))), len(temp_iv), '\n'
-										print '2\t', str('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id]))), len(temp_iv), '\n'
+									outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
+									outfile.write('\t'.join(map(str,[read_12_name, genome, percent_2_id]))+'\n')
 			except Exception, e:
-				print e, '*****EXCEPT'
-				#if read_1_name:
-				#    if id_check_1==True and iv_seq_good_1 == True:
+				pass
+			with open(outfile_genes,'w') as outfile_genes_dict:
+					gene_names = sorted(counts.keys())
+					for gene in gene_names:
+						if counts[gene] > 0:
+							outfile_genes_dict.write('\t'.join(map(str,[gene,counts[gene]])) + '\n')
 
-						#print temp_iv, 'EXCEPT1_giid'
-						#if len(temp_iv) > 0:
-				 #       for i in temp_iv:
-				  #          if temp_iv[0] not in hit_dict:
-				   #             hit_dict[temp_iv[0]] = 1
-					#        else:
-					 #           hit_dict[temp_iv[0]] += 1
-				 
-				#elif read_2_name:
-				 #   if id_check_2==True and iv_seq_good_2== True:     
-				  #      #print temp_iv, 'EXCEPT2'
-				   #     if len(temp_iv) > 0:
-					#        if temp_iv[0] not in hit_dict:
-					 #           hit_dict[temp_iv[0]] = 1
-					  #      else:
-					   #         hit_dict[temp_iv[0]] += 1
 
 def parse_cigar_alignment(cigar_string):
 	#:wq""
@@ -370,9 +382,10 @@ def gff_reader(gff_file, feature_type, id_attribute):
 		for feature in gff:
 			if feature.type == feature_type:  # if the feature is the feature we are looking for.
 				if id_attribute in feature.attr:
-					feature_id = feature.attr[id_attribute] + ' // ' + feature.attr['Parent'][:-4]
+					#feature_id = feature.attr[id_attribute] + ' // ' + feature.attr['Parent'][:-4]
+					feature_id = feature.attr['Parent'][:-4] + ' // ' + feature.attr[id_attribute]
 				features[feature.iv] += feature_id
-				counts[feature.attr[id_attribute]] = 0
+				counts[feature_id] = 0
 				counter += 1
 
 		if counter % 1000 == 0:

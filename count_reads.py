@@ -233,7 +233,7 @@ def main():
 												#hit_dict['']
 												if percent_1_id >= percent_2_id:
 														outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
-												else:					
+												else:
 														outfile.write('\t'.join(map(str,[read_2_name, genome, percent_2_id]))+'\n')
 										elif alignment[1] is None:
 												outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')

@@ -243,14 +243,17 @@ def main():
 
 					temp_iv.append(iv.chrom) #get name of chromosom/contig both PE reads align to, append to list.
 				if len(feature_set) == 1:
-					count_read = False
+					count_read_gff = False
+					
+					feature_name = list(feature_set)[0]
+					
 					if iv_seq_good_1:
-						count_read = True
+						count_read_gff = True
 					elif iv_seq_good_2:
-						count_read = True
-					#print count_read, list(feature_set)[0], counts
-					if count_read == True:
-						counts[list(feature_set)[0]] += 1
+						count_read_gff = True
+					#print count_read_gff, list(feature_set)[0], counts
+					if count_read_gff == True:
+						counts[feature_name] += 1
 						#print list(feature_set)[0], '\t',counts[list(feature_set)[0]]
 						
 				#print temp_iv, 'TRY', iv_seq_good_1, iv_seq_good_2
@@ -258,26 +261,33 @@ def main():
 				#if temp_iv[0]  ==  temp_iv[1]: #if the read maps to the same contig/chromosom then +1 only once
 				if len(temp_iv):
 						for genome in temp_iv:
+								feature = str()
+								if count_read_gff == True:
+									feature = feature_name
+								else:
+									feature = 'Not aligned to CDS.'
 								if iv_seq_good_1:
 										hit_dict[read_1_name] = dict()
 										if iv_seq_good_2:
 												#hit_dict['']
 												if percent_1_id >= percent_2_id:
-														outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
+														outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature]))+'\n')
+														
 												else:
-														outfile.write('\t'.join(map(str,[read_2_name, genome, percent_2_id]))+'\n')
+														outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature]))+'\n')
 										elif alignment[1] is None:
-												outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
+												outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature]))+'\n')
 								elif iv_seq_good_2:
-									outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
-									outfile.write('\t'.join(map(str,[read_12_name, genome, percent_2_id]))+'\n')
+									#outfile.write('\t'.join(map(str,[read_1_name, genome, percent_1_id]))+'\n')
+									outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature]))+'\n')
 			except Exception, e:
 				pass
+			"""
 			with open(outfile_genes,'w') as outfile_genes_dict:
 					gene_names = sorted(counts.keys())
 					for gene in gene_names:
 						if counts[gene] > 0:
-							outfile_genes_dict.write('\t'.join(map(str,[gene,counts[gene]])) + '\n')
+							outfile_genes_dict.write('\t'.join(map(str,[gene,counts[gene]])) + '\n')"""
 
 
 def parse_cigar_alignment(cigar_string):

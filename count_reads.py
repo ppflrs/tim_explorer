@@ -278,26 +278,26 @@ def main():
 												#hit_dict['']
 												if percent_1_id >= percent_2_id:
 														#print 'scenario 1'
-														outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature]))+'\n')
+														outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature, read_1_start, read_1_end]))+'\n')
 														fasta_entry = fasta_formatter(alignment[0], 1, feature, percent_2_id)
 														outfile_fasta.write(fasta_entry)
 
 												else:
 														#print 'scenario 2'
 														#print alignment[1].read.name, alignment[1].iv.chrom, alignment[1].read.seq, feature, alignment[1].iv.start, alignment[1].iv.end
-														outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature]))+'\n')
+														outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature, read_2_start, read_2_end]))+'\n')
 														fasta_entry = fasta_formatter(alignment[1], 2, feature, percent_2_id)
 														#print fasta_entry
 														outfile_fasta.write(fasta_entry)
 
 										elif alignment[1] is None:
 												#print 'scenario 3'
-												outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature]))+'\n')
+												outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature, read_1_start, read_1_end]))+'\n')
 												fasta_entry = fasta_formatter(alignment[0], 1, feature, percent_2_id)
 												outfile_fasta.write(fasta_entry)
 								elif iv_seq_good_2:
 									#print 'scenario 4'
-									outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature]))+'\n')
+									outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature, read_2_start, read_2_end]))+'\n')
 									fasta_entry = fasta_formatter(alignment[1], 2, feature, percent_2_id)
 									outfile_fasta.write(fasta_entry)
 			except Exception, e:
@@ -314,8 +314,12 @@ def fasta_formatter(aln, read_aln_id,feature_name, percent_id):
 	read_name_id = read_name + '.' + str(read_aln_id)
 	#print read_name_id
 	genome_name = str(aln.iv.chrom)
-	aln_start = str(aln.iv.start)
-	aln_end = str(aln.iv.end)
+	if aln.iv.end > aln.iv.start:
+		aln_start = str(aln.iv.start)
+		aln_end = str(aln.iv.end)
+	else:
+		aln_start = str(aln.iv.end)
+		aln_end = str(aln.iv.start)
 	read_seq = str(aln.read.seq)
 	pct_id = str(round(percent_id,2))
 	fasta_record = str('>' + read_name + '{read_name=' + read_name_id + '}'\

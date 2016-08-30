@@ -14,10 +14,10 @@ if args.tsv_file:
 else:
     sys.exit('Exiting. No tsv file specified.')
 
-tsv_file = '/Users/jfloresu/analysis/tim_explorer/ERR594413.tsv'
+#tsv_file = '/Users/jfloresu/analysis/tim_explorer/ERR594413.tsv'
 tsv_file_agg = tsv_file.replace('.tsv','.agg.tsv')
 
-df = pd.read_csv(tsv_file,sep='\t',names=['read','genome','id','gene'])
+df = pd.read_csv(tsv_file,sep='\t',names=['read','genome','id','gene','aln_start','aln_end'])
 del df['genome']
 
 df['id'] = df.loc[:,'id'].round(0)

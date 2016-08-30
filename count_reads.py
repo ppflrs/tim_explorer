@@ -232,9 +232,9 @@ def main():
 				iv_seq_good_2 = False
 
 			temp_iv = []
-
 			try: ###^*(^*^&^*^*^*^*^* ANY CONDITOINS TO ADD??
 				feature_set = set()
+				count_read_gff = False
 				for iv in iv_seq:
 					if iv.chrom not in features.chrom_vectors:
 					# check if alignment feaure name in features from GFF file

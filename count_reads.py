@@ -424,7 +424,7 @@ def gff_reader(gff_file, feature_type, id_attribute):
 	# e.g 'gene_id'. the attributes (9th) column of the gff file.user inputs desired id_attribute
 	id_attribute = id_attribute # We will use 'product'
 	counts = dict()
-	features = HTSeq.GenomicArrayOfSets("auto")
+	features = HTSeq.GenomicArrayOfSets("auto", stranded=False)
 	counter = 0
 	try:
 		for feature in gff:

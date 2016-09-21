@@ -127,8 +127,8 @@ def main():
 	read_counter = 0
 	for alignment in reader:
 		read_counter += 1
-		read1_name = ''
-		read_2_name = ''
+		read_1_dict = dict()
+		read_2_dict = dict()
 		if read_counter % 1000000 == 0 and verbose:
 			if verbose:
 				print read_counter, 'alignment pairs processed'
@@ -138,24 +138,17 @@ def main():
 		else:
 			iv_seq = tuple()
 			if (alignment[0] is not None) and (alignment[0].aligned):
-				read_1_name = alignment[0].read.name
-				read_1_seq = alignment[0].read.seq
-				read_1_length = len(read_1_seq)
-				read_1_start = alignment[0].iv.start
-				read_1_end = alignment[0].iv.end
-				#print 'read_1_length', read_1_length, alignment[0].read.seq, alignment[0].original_sam_line
-				opt_1_fields = alignment[0].optional_fields
-				flag_1 = alignment[0].flag
-				contig = alignment[0].iv.chrom
+				read_1_dict = param_extract(alignment[0])
+				read_1_length = read_1_dict['len']
 				id_check_1 = False
 				if min_id > 0:
-					cigar_1_string = parse_cigar(alignment[0].original_sam_line.split('\t')[5]) #just the cigar string without the fancy HTseq additions
-					cigar_1_soft_clipped, cigar_1_M, cigar_1_insertions, cigar_1_deletions, cigar_1_insertions = parse_cigar_alignment(cigar_1_string)
-					score_1, md_1_matches, md_1_deletions, md_1_mismatches = parse_opt_fields(opt_1_fields) #get alignment data from md string
-					clipped_1 = (float(cigar_1_soft_clipped)/float(read_1_length))
-					percent_1_id = (100.0 * ((float(md_1_matches) / (float(read_1_length - cigar_1_soft_clipped + cigar_1_insertions + cigar_1_deletions)))))
+					read_1_metrics = calc_read_metrics(read_1_dict)
+					percent_1_id = read_1_metrics['pct_id']
+					read_1_dict['pct_id'] = percent_1_id
+					cigar_1_soft_clipped = read_1_metrics['cigar_soft_clip']
+					clipped_1 = read_1_metrics['clip']
 					if float(percent_1_id) >= min_id:
-						if (float(cigar_1_soft_clipped)/float(read_1_length)) <= float(max_clip_): #check the clipping percentag
+						if clipped_1 <= float(max_clip_): #check the clipping percentag
 							iv_seq_good_1 = True
 							id_check_1 = True
 						else:
@@ -185,24 +178,17 @@ def main():
 				iv_seq_good_1 = False
 			#now the second read
 			if (alignment[1] is not None) and (alignment[1].aligned):
-				read_2_name = alignment[1].read.name
-				read_2_seq = alignment[1].read.seq
-				read_2_length = len(read_2_seq)
-				read_2_start = alignment[1].iv.start
-				read_2_end = alignment[1].iv.end
-				#print 'read_2_length', read_2_length, alignment[1].read.seq
-				opt_2_fields = alignment[1].optional_fields
-				flag_2 = alignment[1].flag
-				contig = alignment[1].iv.chrom
+				read_2_dict = param_extract(alignment[1])
+				read_2_length = read_2_dict['len']
 				id_check_2 = False
 				if min_id > 0:
-					cigar_2_string = parse_cigar(alignment[1].original_sam_line.split('\t')[5]) #just the cigar string without the fancy HTseq additions
-					cigar_2_soft_clipped, cigar_2_M, cigar_2_insertions, cigar_2_deletions, cigar_2_insertions = parse_cigar_alignment(cigar_2_string)
-					score_2, md_2_matches, md_2_deletions, md_2_mismatches = parse_opt_fields(opt_2_fields) #get alignment data from md string
-					clipped_2 = (float(cigar_2_soft_clipped)/float(read_2_length))
-					percent_2_id = (100.0 * ((float(md_2_matches) / (float(read_2_length - cigar_2_soft_clipped + cigar_2_insertions + cigar_2_deletions)))))
+					read_2_metrics = calc_read_metrics(read_2_dict)
+					percent_2_id = read_2_metrics['pct_id']
+					read_2_dict['pct_id'] = percent_2_id
+					cigar_2_soft_clipped = read_2_metrics['cigar_soft_clip']
+					clipped_2 = read_2_metrics['clip']
 					if float(percent_2_id) >= min_id:
-						if (float(cigar_2_soft_clipped)/float(read_2_length)) <= float(max_clip_): #check the clipping percentag
+						if clipped_2 <= float(max_clip_): #check the clipping percentag
 							iv_seq_good_2 = True
 							id_check_2 = True
 						else:
@@ -273,32 +259,28 @@ def main():
 								else:
 									feature = 'Not aligned to CDS.'
 								if iv_seq_good_1:
-										hit_dict[read_1_name] = dict()
+										#hit_dict[read_1_name] = dict()
 										if iv_seq_good_2:
-												#hit_dict['']
 												if percent_1_id >= percent_2_id:
-														#print 'scenario 1'
-														outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature, read_1_start, read_1_end]))+'\n')
-														fasta_entry = fasta_formatter(alignment[0], 1, feature, percent_2_id)
+														tsv_entry = tsv_formatter(read_1_dict, 1, feature)
+														outfile.write(tsv_entry)
+														fasta_entry = fasta_formatter(read_1_dict, 1, feature_name)
 														outfile_fasta.write(fasta_entry)
-
 												else:
-														#print 'scenario 2'
-														#print alignment[1].read.name, alignment[1].iv.chrom, alignment[1].read.seq, feature, alignment[1].iv.start, alignment[1].iv.end
-														outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature, read_2_start, read_2_end]))+'\n')
-														fasta_entry = fasta_formatter(alignment[1], 2, feature, percent_2_id)
-														#print fasta_entry
+														tsv_entry = tsv_formatter(read_2_dict, 2, feature)
+														outfile.write(tsv_entry)
+														fasta_entry = fasta_formatter(read_2_dict, 2, feature_name)
 														outfile_fasta.write(fasta_entry)
 
 										elif alignment[1] is None:
-												#print 'scenario 3'
-												outfile.write('\t'.join(map(str,[read_1_name + '.1', genome, percent_1_id, feature, read_1_start, read_1_end]))+'\n')
-												fasta_entry = fasta_formatter(alignment[0], 1, feature, percent_2_id)
+												tsv_entry = tsv_formatter(read_1_dict, 1, feature)
+												outfile.write(tsv_entry)
+												fasta_entry = fasta_formatter(read_1_dict, 1, feature_name)
 												outfile_fasta.write(fasta_entry)
 								elif iv_seq_good_2:
-									#print 'scenario 4'
-									outfile.write('\t'.join(map(str,[read_2_name + '.2', genome, percent_2_id, feature, read_2_start, read_2_end]))+'\n')
-									fasta_entry = fasta_formatter(alignment[1], 2, feature, percent_2_id)
+									tsv_entry = tsv_formatter(read_2_dict, 2, feature)
+									outfile.write(tsv_entry)
+									fasta_entry = fasta_formatter(read_2_dict, 2, feature_name)
 									outfile_fasta.write(fasta_entry)
 			except Exception, e:
 				pass
@@ -309,29 +291,38 @@ def main():
 						if counts[gene] > 0:
 							outfile_genes_dict.write('\t'.join(map(str,[gene,counts[gene]])) + '\n')"""
 
-def fasta_formatter(aln, read_aln_id,feature_name, percent_id):
-	read_name = str(aln.read.name)
-	read_name_id = read_name + '.' + str(read_aln_id)
-	#print read_name_id
-	genome_name = str(aln.iv.chrom)
-	if aln.iv.end > aln.iv.start:
-		aln_start = str(aln.iv.start)
-		aln_end = str(aln.iv.end)
+def fasta_formatter(read_dict, pair_id, feature_name):
+	read_name = read_dict['name']
+	read_name_id = read_dict['name'] + '.' + str(pair_id)
+	genome_name = read_dict['contig']
+	if read_dict['read_end'] > read_dict['read_start']:
+		aln_start = str(read_dict['read_start'])
+		aln_end = str(read_dict['read_end'])
 	else:
-		aln_start = str(aln.iv.end)
-		aln_end = str(aln.iv.start)
-	read_seq = str(aln.read.seq)
-	pct_id = str(round(percent_id,2))
+		aln_start = str(read_dict['read_end'])
+		aln_end = str(read_dict['read_start'])
+	read_seq = read_dict['seq']
+	pct_id = str(round(read_dict['pct_id'],2))
+
 	fasta_record = str('>' + read_name + '{read_name=' + read_name_id + '}'\
 	 + '{genome=' + genome_name + '}' +'{gene=' + feature_name + '}'\
 	  + '{pct_id=' + pct_id + '}' + '{aln_start=' + aln_start + '}' + '{aln_end=' + aln_end + '}'+'\n')
 	fasta_record += read_seq + '\n'
 	return fasta_record
 
-def parse_cigar_alignment(cigar_string):
+def tsv_formatter(read_dict, pair_id, feature):
+	dataset = read_dict['name'].split('.')[0]
+	tsv_entry = '\t'.join(map(str,[read_dict['name'] + '.' + str(pair_id),\
+	 read_dict['contig'], round(read_dict['pct_id'],2), feature,\
+	  read_dict['read_start'], read_dict['read_end'], dataset]))+'\n'
+	return tsv_entry
+
+def parse_cigar_alignment(read_dict):
 	#:wq""
 	#parse cigar string to get alignment data: total number of insertions, clipped bases, deletions
 	#""
+	cigar_string = parse_cigar(read_dict['cigar'])
+	#print cigar_string
 	cigar_soft_clipped = 0
 	cigar_M = 0
 	cigar_insertions = 0
@@ -354,12 +345,13 @@ def parse_cigar_alignment(cigar_string):
 	#print 'cigar_soft_clipped -->', cigar_soft_clipped, 'cigar_M -->', cigar_M, 'cigar_deletions -->', cigar_deletions, 'cigaer_insertion -->', cigar_insertions
 	#print 'cigar total -->', cigar_soft_clipped + cigar_M + cigar_deletions + cigar_insertions
 
-def parse_opt_fields(opt_fields):
+def parse_opt_fields(read_dict):
 	#""
 	#parse optional fields coulmn in sam file.
 	#get MD string alignment data.
 	#get score --> AS
 	#""
+	opt_fields = read_dict['opt_fields']
 	score = int()
 	md_matches = int()
 	md_deletions = int()
@@ -414,6 +406,28 @@ def write_to_samout(samoutfile, paired_end, alignment, assignment):
 		 if read is not None:
 			samoutfile.write(read.original_sam_line.rstrip() + "\tXF:Z:" + assignment + "\n" )
 
+def param_extract(alignment):
+	read_name = alignment.read.name
+	read_seq = alignment.read.seq
+	read_length = len(read_seq)
+	read_start = alignment.iv.start
+	read_end = alignment.iv.end
+	opt_fields = alignment.optional_fields
+	flag = alignment.flag
+	contig = alignment.iv.chrom
+	cigar_string = alignment.original_sam_line.split('\t')[5] #just the cigar string without the fancy HTseq additions
+	read_dict = {'name':read_name, 'seq':read_seq, 'len':read_length,\
+	 'read_start': read_start, 'read_end': read_end, 'opt_fields': opt_fields,\
+	 'flag': flag, 'contig': contig, 'cigar': cigar_string}
+	return read_dict
+def calc_read_metrics(read_dict):
+	read_len = read_dict['len']
+	cigar_soft_clipped, cigar_M, cigar_insertions, cigar_deletions, cigar_insertions = parse_cigar_alignment(read_dict)
+	score, md_matches, md_deletions, md_mismatches = parse_opt_fields(read_dict) #get alignment data from md string
+	clip = float(cigar_soft_clipped)/float(read_len)
+	pct_id = 100.0 * ((float(md_matches) / (float(read_len - cigar_soft_clipped + cigar_insertions + cigar_deletions))))
+	read_aln_metrics = {'clip':clip, 'pct_id':pct_id, 'cigar_soft_clip':cigar_soft_clipped}
+	return read_aln_metrics
 def gff_reader(gff_file, feature_type, id_attribute):
 	"""
 	Modified from alon's script. based on HTseq-count documentation and script

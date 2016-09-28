@@ -7,7 +7,7 @@ import pandas as pd
 exe_parser = argparse.ArgumentParser()
 exe_parser.add_argument('tsv_file', type=str, help='<input file>')
 exe_parser.add_argument('--mode', type=str, help='output mode: cov - output tsv for cov plot \n reg - regular tsv output for map.')
-exe_parser.add_argument('--metadata', type=str, help="metadata file.")
+exe_parser.add_argument('--metadata', type=str, help="TARA Oceans metadata file, only required for cov mode.")
 
 args = exe_parser.parse_args()
 
@@ -20,6 +20,10 @@ if args.mode in {'cov','reg'}:
 	mode = args.mode
 else:
 	sys.exit('Exiting. No tsv file mode specified.')
+
+if args.mode == "reg":
+	if args.metadata == None:
+		sys.exit('Exiting. No metadata tsv file specified.')
 
 df = pd.read_csv(tsv_file,sep='\t',names=['read','genome','id','gene','aln_start','aln_end','dataset'])
 del df['genome']
